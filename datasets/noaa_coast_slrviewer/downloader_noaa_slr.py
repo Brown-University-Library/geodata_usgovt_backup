@@ -3,12 +3,12 @@
 
 """
 Download NOAA Coast Sea Level Rise Viewer Data
-Frank Donnelly, Feb 23 2025
+Frank Donnelly, Feb 28 2025
 
 Notes: 
 1. Data is stored on multiple pages
 2. Except for the wetlands page, each page has a text file with list of files to download
-3. Some pages are further subdivided by state and must be iterated through
+3. Some pages are further subdivided by state or tide levels and must be iterated through
 4. Must also capture extra documentation links embedded on the page 
 5. A page with dataset updates must be captured separately
 6. Subfolders are created to store data for each page (but not subdivided by state)
@@ -16,7 +16,8 @@ Notes:
 8. Wetlands page has no text file listing, uses relative links to zips stored in the page
 9. Metadata from the home page not created from function as there is no data or file count
 10. One of the state pages uses different abbreviations and is treated as exception
-11. TEMPCOUNT variable lines in the downloads function can be uncommented for debugging
+11. Select documentation is downloaded separately from a list of urls
+12. TEMPCOUNT variable lines in the downloads function can be uncommented for debugging
 """
 
 import requests, os
@@ -35,26 +36,32 @@ if not os.path.exists(outfolder):
 
 url_update='https://coast.noaa.gov/slr/#/updates/data/'
 
+url_docs=['https://coast.noaa.gov/data/digitalcoast/pdf/slr-faq.pdf',
+          'https://coast.noaa.gov/data/digitalcoast/pdf/slr-inundation-methods.pdf',
+          'https://coast.noaa.gov/data/digitalcoast/pdf/slr-marsh-migration-methods.pdf',
+          'https://coast.noaa.gov/data/digitalcoast/pdf/slr-high-tide-flooding.pdf',
+          'https://sciencecouncil.noaa.gov/wp-content/uploads/2022/07/Sea-Level-Rise-and-CF-SoS-Fact-Sheet-FINAL-2022.03.09-1.pdf',
+          'https://sealevel.globalchange.gov/internal_resources/756/noaa-nos-techrpt01-global-regional-SLR-scenarios-US.pdf',
+          'https://sealevel.globalchange.gov/internal_resources/784/noaa-nos-techrpt02-global-regional-SLR-scenarios-US-application-guide.pdf'
+          ]
+
 urls_no_states={'https://coast.noaa.gov/slrdata/Ancillary/index.html':'https://coast.noaa.gov/slrdata/Ancillary/URLlist_Ancillary.txt',
                 'https://coast.noaa.gov/slrdata/Ancillary/NOAA_OCM_SLR_MergedPolys_Shapefiles_0225/index.html':'https://coast.noaa.gov/slrdata/Ancillary/NOAA_OCM_SLR_MergedPolys_Shapefiles_0225/URLlist_NOAA_OCM_SLR_MergedPolys_Shapefiles_0225.txt',
-                'https://coast.noaa.gov/slrdata/High_Tide_Flooding/index.html':'https://coast.noaa.gov/slrdata/High_Tide_Flooding/URLlist_High_Tide_Flooding.txt',
                 'https://coast.noaa.gov/slrdata/Tidal_Surfaces/index.html':'https://coast.noaa.gov/slrdata/Tidal_Surfaces/URLlist_Tidal_Surfaces.txt'
                 }
 
-urls_states={'https://coast.noaa.gov/slrdata/DEMs/index.html':'https://coast.noaa.gov/slrdata/DEMs/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Depth_Rasters/index.html':'https://coast.noaa.gov/slrdata/Depth_Rasters/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Extent_Rasters/index.html':'https://coast.noaa.gov/slrdata/Extent_Rasters/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Mapping_Confidence/index.html':'https://coast.noaa.gov/slrdata/Mapping_Confidence/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/index.html':'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/{}/URLlist_{}.txt'
-              }
+url_high_tide={'https://coast.noaa.gov/slrdata/High_Tide_Flooding/index.html':'https://coast.noaa.gov/slrdata/High_Tide_Flooding/{}/URLlist_{}.txt'}
 
-urls_states={'https://coast.noaa.gov/slrdata/Depth_Rasters/index.html':'https://coast.noaa.gov/slrdata/Depth_Rasters/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Extent_Rasters/index.html':'https://coast.noaa.gov/slrdata/Extent_Rasters/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Mapping_Confidence/index.html':'https://coast.noaa.gov/slrdata/Mapping_Confidence/{}/URLlist_{}.txt',
-              'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/index.html':'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/{}/URLlist_{}.txt'
-              }
+urls_states={'https://coast.noaa.gov/slrdata/DEMs/index.html':'https://coast.noaa.gov/slrdata/DEMs/{}/URLlist_{}.txt',
+             'https://coast.noaa.gov/slrdata/Depth_Rasters/index.html':'https://coast.noaa.gov/slrdata/Depth_Rasters/{}/URLlist_{}.txt',
+             'https://coast.noaa.gov/slrdata/Extent_Rasters/index.html':'https://coast.noaa.gov/slrdata/Extent_Rasters/{}/URLlist_{}.txt',
+             'https://coast.noaa.gov/slrdata/Mapping_Confidence/index.html':'https://coast.noaa.gov/slrdata/Mapping_Confidence/{}/URLlist_{}.txt',
+             'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/index.html':'https://coast.noaa.gov/slrdata/Sea_Level_Rise_Vectors/{}/URLlist_{}.txt'
+             }
 
 url_wetland='https://coastalimagery.blob.core.windows.net/ccap-landcover/CCAP_bulk_download/Sea_Level_Rise_Wetland_Impacts/index.html'
+
+tides=['Major','Minor','Moderate']
 
 states=['AK','AL','AS','CA','CT','DC','DE','FL','GA','GU','HI','LA','MA','MD',
         'ME','MP','MS','NC','NH','NJ','NY','OR','PA','PR','RI','SC','TX','VA',
@@ -85,7 +92,7 @@ def get_other_links(extra_links,fileformat):
     
 def download_data(datalinks,outpath,page_title):
     'Downloads data'
-    TESTCOUNT=0
+    # TESTCOUNT=0
     i = 0 
     errors={}
     for d in datalinks:
@@ -98,14 +105,14 @@ def download_data(datalinks,outpath,page_title):
                     for chunk in response.iter_content(chunk_size=10000000):
                         writefile.write(chunk)
             i=i+1
-            TESTCOUNT=TESTCOUNT+1
+            # TESTCOUNT=TESTCOUNT+1
             print('Downloaded',fname)
         except requests.exceptions.RequestException as e:
             print('Could not retrieve',d,'because of',e)
             errors[d]=e
-        finally:
-            if TESTCOUNT==2:
-                break
+        # finally:
+        #     if TESTCOUNT==2:
+        #         break
     print('Finished downloading',i,'files from',page_title)
     return i, errors
 
@@ -177,21 +184,48 @@ save_page(url,subpath,webpage)
 
 all_links=[]
 
+# SAVE DOCUMENTS
+
+subpath=make_subfolder('documentation/documentation',outfolder)
+counter,errors=download_data(url_docs,subpath,'SLR Documentation')
+write_metadata(dataset,person,'SLR Documentation','https://coast.noaa.gov/slr/#/layer/slr',counter,errors,subpath)
+
+all_links.extend(url_docs)
+    
 # SAVE DATA NOT SUBDIVIDED BY STATE
 
-# for k,v in urls_no_states.items():
-#     webpage,page_title,links=page_scrape(k)
-#     subpath=make_subfolder(k,outfolder)
-#     save_page(k,subpath,webpage)
-#     datalinks=create_filelist(v)
-#     extralinks=get_other_links(links,'.pdf')
-#     if len(extralinks) > 1:
-#         datalinks.extend(extralinks)
-#     counter,errors=download_data(datalinks,subpath,page_title)
-#     write_metadata(dataset,person,page_title,k,counter,errors,subpath)
+for k,v in urls_no_states.items():
+    webpage,page_title,links=page_scrape(k)
+    subpath=make_subfolder(k,outfolder)
+    save_page(k,subpath,webpage)
+    datalinks=create_filelist(v)
+    extralinks=get_other_links(links,'.pdf')
+    if len(extralinks) > 1:
+        datalinks.extend(extralinks)
+    counter,errors=download_data(datalinks,subpath,page_title)
+    write_metadata(dataset,person,page_title,k,counter,errors,subpath)
 
-#     all_links.extend(datalinks)
-    
+    all_links.extend(datalinks)
+
+# SAVE DATA SUBDIVIDED BY TIDES
+
+for k,v in url_high_tide.items():
+    webpage,page_title,links=page_scrape(k)
+    subpath=make_subfolder(k,outfolder)
+    save_page(k,subpath,webpage)
+    tidelinks=[]
+    for t in tides:
+        tlink=v.format(t,t)
+        datalinks=create_filelist(tlink)
+        tidelinks.extend(datalinks)
+    extralinks=get_other_links(links,'.pdf')
+    if len(extralinks)>0:
+        tidelinks.extend(extralinks)   
+    counter,errors=download_data(tidelinks,subpath,page_title)
+    write_metadata(dataset,person,page_title,k,counter,errors,subpath)
+
+    all_links.extend(tidelinks) 
+
 # SAVE DATA SUBDIVIDED BY STATE
 
 for k,v in urls_states.items():
