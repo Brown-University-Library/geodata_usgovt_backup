@@ -19,5 +19,3 @@ Each download instance contains:
 - _ERRORS-datestemp.txt if applicable, lists files not downloaded due to broken links
 
 See the [README.txt](https://github.com/Brown-University-Library/geodata_usgovt_backup/blob/main/datasets/README.txt) doc to correlate folder names with the names of datasets that were downloaded
-
-(PLEASE NOTE that the addition of the NOAA Coast SLR data is still a work in progress)
