@@ -1,6 +1,6 @@
 # US Federal Government Data Backup
 
-This repo hosts Python scripts that use the Beautiful Soup and Requests modules to create back-ups of specific US federal government datasets (which are in the public domain). The actual datasets (with the exception of imls_mdf, which is included as an example) are NOT stored in this repo, but are hosted in a public [Globus](https://www.globus.org/get-started) guest collection:
+This repo hosts scripts (Python, R, others) used to create back-ups of specific US federal government datasets (which are in the public domain). The actual datasets (with the exception of imls_mdf, which is included as an example) are NOT stored in this repo, but are hosted in a public [Globus](https://www.globus.org/get-started) guest collection:
 
 **BrownU_Library_PUBL_usgovdata_backup**
 
@@ -8,10 +8,10 @@ For institutions and organizations that want a copy of the archive, you can down
 
 Each folder is named for an agency and dataset, and contain:
 
-- A Python script that was written to download data
+- A script that was written to download data
 - Subfolder(s) containing datasets, date-stamped to indicate download date
 
-Each download instance contains:
+Most download instances contain:
 
 - Datasets, documentation, and summary reports hosted on a specific webpage
 - _METADATA-datestamp.txt has basic information about the download
